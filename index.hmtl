@@ -1,0 +1,2265 @@
+                   
+</body>
+</html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Audio Transcription Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* RTL support for Arabic */
+        .rtl {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Traditional Arabic', 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+        }
+        
+        /* Animation for recording indicator */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
+        .animate-blink {
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6" id="pageTitle">Screen Audio Transcription Tool</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content Area - Video (Larger) -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-4">
+                        <h2 class="text-xl font-semibold" id="screenHeader">Screen Share</h2>
+                    </div>
+                    
+                    <!-- Controls for screen sharing -->
+                    <div class="p-4 bg-gray-50 border-b border-gray-200">
+                        <div class="flex flex-wrap gap-3 justify-center">
+                            <button id="shareScreenBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors">
+                                Share Screen with Audio
+                            </button>
+                            <button id="stopScreenBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>
+                                Stop Sharing
+                            </button>
+                            <button id="startTranscribeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>
+                                Start Transcribing
+                            </button>
+                            <button id="stopTranscribeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>
+                                Stop Transcribing
+                            </button>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-3 justify-center mt-3">
+                            <button id="recordAudioBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>
+                                Record Audio
+                            </button>
+                            <button id="recordVideoBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors opacity-50 cursor-not-allowed" disabled>
+                                Record Video
+                            </button>
+                            <button id="clearBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Status message -->
+                    <div id="recordingIndicator" class="hidden px-4 py-2 bg-red-50 text-red-600 text-center font-medium border-b border-red-100">
+                        <div class="flex items-center justify-center">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-blink mr-2"></div>
+                            <span id="recordingText">Recording in progress...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="italic text-center text-gray-500 py-2 text-sm" id="status">
+                        Start by clicking "Share Screen with Audio"
+                    </div>
+                    
+                    <!-- Screen preview area -->
+                    <div class="p-4 flex justify-center items-center bg-gray-900 h-[400px]">
+
+
+                        <video id="screenPreview" class="max-w-full max-h-full rounded hidden" autoplay muted playsinline></video>
+                        <div id="screenPlaceholder" class="text-center p-6 text-gray-400 bg-gray-800 rounded border border-gray-700 w-full h-full flex items-center justify-center">
+                            <span id="screenPlaceholderText">Click "Share Screen with Audio" to start sharing your screen</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Download section -->
+                    <div id="downloadSection" class="p-4 text-center border-t border-gray-200 hidden">
+                        <p id="downloadReadyText" class="text-green-600 font-medium mb-3">Your recording is ready!</p>
+                        <div class="flex gap-3 justify-center">
+                            <a href="#" id="downloadAudioLink" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors">
+                                Download Audio
+                            </a>
+                            <a href="#" id="downloadVideoLink" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors hidden">
+                                Download Video
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Language Settings Card -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-4">
+                        <h2 class="text-xl font-semibold">Language Settings</h2>
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex flex-wrap gap-6 items-center justify-center">
+                            <div class="flex items-center gap-2">
+                                <label for="languageSelect" id="languageLabel" class="font-medium">Language:</label>
+                                <select id="languageSelect" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="en-US">English</option>
+                                    <option value="ar-SA">العربية (Arabic)</option>
+                                    <option value="fr-FR">Français (French)</option>
+                                    <option value="es-ES">Español (Spanish)</option>
+                                    <option value="de-DE">Deutsch (German)</option>
+                                    <option value="zh-CN">中文 (Chinese)</option>
+                                    <option value="ja-JP">日本語 (Japanese)</option>
+                                    <option value="ru-RU">Русский (Russian)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Arabic dialect selector (shown only when Arabic is selected) -->
+                            <div class="flex items-center gap-2 hidden" id="dialectSelector">
+                                <label for="dialectSelect" id="dialectLabel" class="font-medium">اللهجة (Dialect):</label>
+                                <select id="dialectSelect" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="ar-SA">الفصحى (MSA)</option>
+                                    <option value="ar-EG">مصرية (Egyptian)</option>
+                                    <option value="ar-DZ">جزائرية (Algerian)</option>
+                                    <option value="ar-MA">مغربية (Moroccan)</option>
+                                    <option value="ar-TN">تونسية (Tunisian)</option>
+                                    <option value="ar-IQ">عراقية (Iraqi)</option>
+                                    <option value="ar-SY">شامية (Levantine)</option>
+                                    <option value="ar-AE">خليجية (Gulf)</option>
+                                </select>
+                                <button id="advancedArabicBtn" class="text-purple-600 hover:text-purple-800 text-sm font-medium border border-purple-200 bg-purple-50 px-3 py-1 rounded-md">
+                                    إعدادات متقدمة
+                                </button>
+                            </div>
+                            
+                            <!-- Video quality selector -->
+                            <div class="flex items-center gap-2">
+                                <label for="qualitySelect" id="qualityLabel" class="font-medium">Video Quality:</label>
+                                <select id="qualitySelect" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="standard">Standard</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Auto-translate toggle -->
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="autoTranslateToggle" class="w-4 h-4 text-blue-600" checked>
+                                <label for="autoTranslateToggle" class="font-medium">Auto-Translate</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Arabic settings section (hidden by default) -->
+                        <div class="mt-4 p-4 bg-purple-50 rounded-md border border-purple-100 hidden" id="advancedArabicSettings">
+                            <h3 id="advancedSettingsHeader" class="text-lg font-medium text-purple-800 mb-3">إعدادات متقدمة للنسخ العربي</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <label for="confidenceThreshold" id="confidenceLabel" class="font-medium min-w-[120px]">دقة التعرف:</label>
+                                    <input type="range" id="confidenceThreshold" class="w-full" min="0" max="100" value="60">
+                                    <span id="confidenceValue" class="text-sm font-medium min-w-[40px]">60%</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <label for="contextualBoostSelect" id="contextualBoostLabel" class="font-medium min-w-[120px]">تعزيز السياق:</label>
+                                    <select id="contextualBoostSelect" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 w-full">
+                                        <option value="low">منخفض</option>
+                                        <option value="medium" selected>متوسط</option>
+                                        <option value="high">مرتفع</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="autoCorrectToggle" class="w-4 h-4 text-purple-600" checked>
+                                    <label for="autoCorrectToggle" id="autoCorrectLabel" class="font-medium">تصحيح تلقائي</label>
+                                </div>
+                                
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="diacriticsToggle" class="w-4 h-4 text-purple-600">
+                                    <label for="diacriticsToggle" id="diacriticsLabel" class="font-medium">إظهار التشكيل</label>
+                                </div>
+                                
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="numeralsToggle" class="w-4 h-4 text-purple-600" checked>
+                                    <label for="numeralsToggle" id="numeralsLabel" class="font-medium">أرقام عربية (١٢٣)</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Alternative Arabic input methods -->
+                            <div class="mt-4 pt-4 border-t border-purple-200">
+                                <h4 id="alternativeInputHeader" class="font-medium text-purple-800 mb-2">الطرق البديلة للإدخال</h4>
+                                
+                                <div class="flex flex-wrap gap-4 items-center">
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" id="forceFallbackToggle" class="w-4 h-4 text-purple-600" checked>
+                                        <label for="forceFallbackToggle" id="forceFallbackLabel" class="font-medium">تفعيل النظام البديل للتعرف على الكلام</label>
+                                    </div>
+                                    
+                                    <button id="directInputBtn" class="text-purple-600 hover:text-purple-800 font-medium border border-purple-200 bg-white px-3 py-1 rounded-md">
+                                        الإدخال المباشر للنص
+                                    </button>
+                                </div>
+                                
+                                <!-- Troubleshooting -->
+                                <div class="mt-4">
+                                    <h4 id="troubleshootingHeader" class="font-medium text-purple-800 mb-2">استكشاف الأخطاء وإصلاحها</h4>
+                                    <p class="text-sm text-purple-700">
+                                        إذا لم يعمل التعرف على الكلام باللغة العربية، جرّب:
+                                        <br>1. استخدام متصفح Chrome أو Edge الأحدث
+                                        <br>2. التأكد من تثبيت حزمة اللغة العربية على نظام التشغيل
+                                        <br>3. تفعيل "النظام البديل" أعلاه
+                                        <br>4. استخدام "الإدخال المباشر للنص" كحل بديل
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar Area - Transcript and Translation -->
+            <div class="lg:col-span-1 space-y-4">
+                <!-- Alert for audio -->
+                <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-700 p-4 rounded hidden" id="audioAlert">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm" id="audioAlertText">Important: For capturing screen audio, you must check "Share audio" when selecting what to share!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transcript Card -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-4">
+                        <h2 class="text-xl font-semibold" id="transcriptHeader">Transcript of Screen Audio</h2>
+                    </div>
+                    
+                    <!-- Text controls for transcript -->
+                    <div class="flex justify-end gap-2 p-2 bg-gray-50 border-b border-gray-200">
+                        <button id="copyBtn" title="Copy transcript" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors">
+                            Copy
+                        </button>
+                        <button id="downloadTextBtn" title="Download transcript as text" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors">
+                            Download
+                        </button>
+                    </div>
+                    
+                    <!-- Transcript content -->
+                    <div id="transcript" class="p-4 min-h-[200px] max-h-[300px] overflow-y-auto border-b border-gray-200"></div>
+                    
+                    <!-- Vocabulary panel for Arabic transcription -->
+                    <div class="p-4 border-t border-gray-200 hidden" id="vocabularyPanel">
+                        <h3 id="vocabularyHeader" class="font-medium text-gray-700 mb-2">Common Terms (Click to Insert)</h3>
+                        
+                        <!-- Domain selector buttons -->
+                        <div class="flex flex-wrap gap-2 mb-3" id="domainSelector">
+                            <button class="domain-btn active text-xs px-2 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-md" data-domain="general">عام (General)</button>
+                            <button class="domain-btn text-xs px-2 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md" data-domain="technical">تقني (Technical)</button>
+                            <button class="domain-btn text-xs px-2 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md" data-domain="business">أعمال (Business)</button>
+                            <button class="domain-btn text-xs px-2 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md" data-domain="education">تعليم (Education)</button>
+                            <button class="domain-btn text-xs px-2 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md" data-domain="media">إعلام (Media)</button>
+                            <button class="domain-btn text-xs px-2 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-md" data-domain="medical">طبي (Medical)</button>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mb-3" id="vocabularyList">
+                            <!-- Will be populated dynamically based on context -->
+                        </div>
+                        
+                        <!-- Custom vocabulary input -->
+                        <div class="flex gap-2">
+                            <input type="text" class="flex-grow border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="customVocabularyInput" placeholder="إضافة مصطلح مخصص (Add custom term)" />
+                            <button class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded-md transition-colors" id="addVocabularyBtn">+</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Correction panel for Arabic transcription -->
+                    <div class="p-4 border-t border-gray-200 hidden" id="correctionPanel">
+                        <h3 id="correctionHeader" class="font-medium text-gray-700 mb-2">Suggest Correction</h3>
+                        <div class="flex gap-2">
+                            <input type="text" class="flex-grow border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" id="correctionInput" placeholder="اقتراح تصحيح (Suggest correction)" />
+                            <button class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded-md transition-colors" id="submitCorrectionBtn">✓</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Translation Card -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" id="translationCard">
+                    <div class="border-b border-gray-200 bg-gradient-to-r from-green-50 to-teal-50 px-5 py-4 flex justify-between items-center">
+                        <h2 class="text-xl font-semibold" id="translationTitle">Translation</h2>
+                        <div class="flex items-center gap-2">
+                            <label for="translationTargetLang" id="translationTargetLabel" class="text-sm font-medium">To:</label>
+                            <select id="translationTargetLang" class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="en-US">English</option>
+                                <option value="ar-SA">العربية (Arabic)</option>
+                                <option value="fr-FR">Français (French)</option>
+                                <option value="es-ES">Español (Spanish)</option>
+                                <option value="de-DE">Deutsch (German)</option>
+                                <option value="zh-CN">中文 (Chinese)</option>
+                                <option value="ja-JP">日本語 (Japanese)</option>
+                                <option value="ru-RU">Русский (Russian)</option>
+                            </select>
+                            <button id="translateBtn" title="Translate text" class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded-md transition-colors">
+                                Translate
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Translation content -->
+                    <div class="p-4 min-h-[200px] max-h-[300px] overflow-y-auto border-b border-gray-200">
+                        <div class="hidden justify-center items-center p-4 text-gray-500" id="translationLoading">
+                            <div class="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin mr-2"></div>
+                            <span>Translating...</span>
+                        </div>
+                        <div id="translatedText" class="text-gray-700"></div>
+                    </div>
+                    
+                    <!-- Translation footer -->
+                    <div class="flex justify-between items-center p-3 bg-gray-50 text-sm text-gray-500">
+                        <div id="translationInfo">Powered by translation service</div>
+                        <div class="flex gap-2">
+                            <button id="copyTranslationBtn" title="Copy translation" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors">
+                                Copy
+                            </button>
+                            <button id="downloadTranslationBtn" title="Download translation" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border border-gray-300 transition-colors">
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Direct text input modal -->
+    <div id="directInputModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h3 id="directInputHeader" class="text-lg font-medium text-gray-900">إدخال النص العربي مباشرة</h3>
+            </div>
+            <div class="p-6">
+                <p id="directInputInstructions" class="mb-4 text-gray-700">إذا كان التعرف على الكلام لا يعمل، يمكنك كتابة النص هنا مباشرة:</p>
+                <textarea id="directInputText" class="w-full h-40 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" dir="rtl" placeholder="اكتب النص العربي هنا..."></textarea>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
+                <button id="directInputCancelBtn" class="mr-3 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                    إلغاء
+                </button>
+                <button id="directInputSubmitBtn" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors">
+                    إضافة إلى النص
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const shareScreenBtn = document.getElementById('shareScreenBtn');
+            const stopScreenBtn = document.getElementById('stopScreenBtn');
+            const startTranscribeBtn = document.getElementById('startTranscribeBtn');
+            const stopTranscribeBtn = document.getElementById('stopTranscribeBtn');
+            const recordAudioBtn = document.getElementById('recordAudioBtn');
+            const recordVideoBtn = document.getElementById('recordVideoBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const status = document.getElementById('status');
+            const transcript = document.getElementById('transcript');
+            const screenPreview = document.getElementById('screenPreview');
+            const screenPlaceholder = document.getElementById('screenPlaceholder');
+            const downloadSection = document.getElementById('downloadSection');
+            const downloadAudioLink = document.getElementById('downloadAudioLink');
+            const downloadVideoLink = document.getElementById('downloadVideoLink');
+            const audioAlert = document.getElementById('audioAlert');
+            const languageSelect = document.getElementById('languageSelect');
+            const dialectSelector = document.getElementById('dialectSelector');
+            const dialectSelect = document.getElementById('dialectSelect');
+            const qualitySelect = document.getElementById('qualitySelect');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadTextBtn = document.getElementById('downloadTextBtn');
+            const vocabularyPanel = document.getElementById('vocabularyPanel');
+            const vocabularyList = document.getElementById('vocabularyList');
+            const recordingIndicator = document.getElementById('recordingIndicator');
+            const recordingText = document.getElementById('recordingText');
+            const translationTargetLang = document.getElementById('translationTargetLang');
+            const translateBtn = document.getElementById('translateBtn');
+            const translatedText = document.getElementById('translatedText');
+            const autoTranslateToggle = document.getElementById('autoTranslateToggle');
+            
+            // Text elements for translation
+            const elementsToTranslate = {
+                'pageTitle': { 'en-US': 'Screen Audio Transcription Tool', 'ar-SA': 'أداة نسخ الصوت من الشاشة' },
+                'screenHeader': { 'en-US': 'Screen Share', 'ar-SA': 'مشاركة الشاشة' },
+                'languageLabel': { 'en-US': 'Language:', 'ar-SA': 'اللغة:' },
+                'dialectLabel': { 'en-US': 'Dialect:', 'ar-SA': 'اللهجة:' },
+                'qualityLabel': { 'en-US': 'Video Quality:', 'ar-SA': 'جودة الفيديو:' },
+                'shareScreenBtn': { 'en-US': 'Share Screen with Audio', 'ar-SA': 'مشاركة الشاشة مع الصوت' },
+                'stopScreenBtn': { 'en-US': 'Stop Sharing', 'ar-SA': 'إيقاف المشاركة' },
+                'startTranscribeBtn': { 'en-US': 'Start Transcribing', 'ar-SA': 'بدء النسخ' },
+                'stopTranscribeBtn': { 'en-US': 'Stop Transcribing', 'ar-SA': 'إيقاف النسخ' },
+                'recordAudioBtn': { 'en-US': 'Record Audio', 'ar-SA': 'تسجيل الصوت' },
+                'recordVideoBtn': { 'en-US': 'Record Video', 'ar-SA': 'تسجيل الفيديو' },
+                'clearBtn': { 'en-US': 'Clear All', 'ar-SA': 'مسح الكل' },
+                'transcriptHeader': { 'en-US': 'Transcript of Screen Audio', 'ar-SA': 'نص الصوت من الشاشة' },
+                'screenPlaceholderText': { 'en-US': 'Click "Share Screen with Audio" to start sharing your screen', 'ar-SA': 'انقر على "مشاركة الشاشة مع الصوت" لبدء مشاركة شاشتك' },
+                'downloadReadyText': { 'en-US': 'Your recording is ready!', 'ar-SA': 'تسجيلك جاهز!' },
+                'downloadAudioLink': { 'en-US': 'Download Audio', 'ar-SA': 'تحميل الصوت' },
+                'downloadVideoLink': { 'en-US': 'Download Video', 'ar-SA': 'تحميل الفيديو' },
+                'audioAlertText': { 'en-US': 'Important: For capturing screen audio, you must check "Share audio" when selecting what to share!', 'ar-SA': 'مهم: لالتقاط صوت الشاشة، يجب عليك تحديد "مشاركة الصوت" عند اختيار ما تريد مشاركته!' },
+                'vocabularyHeader': { 'en-US': 'Common Terms (Click to Insert)', 'ar-SA': 'المصطلحات الشائعة (انقر للإدراج)' },
+                'copyBtn': { 'en-US': 'Copy', 'ar-SA': 'نسخ' },
+                'downloadTextBtn': { 'en-US': 'Download', 'ar-SA': 'تحميل' },
+                'recordingText': { 'en-US': 'Recording in progress...', 'ar-SA': 'جاري التسجيل...' },
+                'translationTitle': { 'en-US': 'Translation', 'ar-SA': 'الترجمة' },
+                'translationTargetLabel': { 'en-US': 'To:', 'ar-SA': 'إلى:' },
+                'translateBtn': { 'en-US': 'Translate', 'ar-SA': 'ترجم' }
+            };
+            
+            // Status messages
+            const statusMessages = {
+                'start': {
+                    'en-US': 'Start by clicking "Share Screen with Audio"',
+                    'ar-SA': 'ابدأ بالنقر على "مشاركة الشاشة مع الصوت"'
+                },
+                'sharing': {
+                    'en-US': 'Screen sharing with audio active. Click "Start Transcribing" to begin.',
+                    'ar-SA': 'مشاركة الشاشة مع الصوت نشطة. انقر على "بدء النسخ" للبدء.'
+                },
+                'noAudio': {
+                    'en-US': 'Screen sharing active, but no audio detected. Please make sure to check "Share audio".',
+                    'ar-SA': 'مشاركة الشاشة نشطة، ولكن لم يتم اكتشاف صوت. يرجى التأكد من تحديد "مشاركة الصوت".'
+                },
+                'transcribing': {
+                    'en-US': 'Transcribing screen audio...',
+                    'ar-SA': 'جاري نسخ صوت الشاشة...'
+                },
+                'transcribingStopped': {
+                    'en-US': 'Transcription stopped.',
+                    'ar-SA': 'توقف النسخ.'
+                },
+                'audioRecording': {
+                    'en-US': 'Recording audio...',
+                    'ar-SA': 'جاري تسجيل الصوت...'
+                },
+                'videoRecording': {
+                    'en-US': 'Recording video with audio...',
+                    'ar-SA': 'جاري تسجيل الفيديو مع الصوت...'
+                },
+                'recordingStopped': {
+                    'en-US': 'Recording stopped.',
+                    'ar-SA': 'توقف التسجيل.'
+                },
+                'sharingStopped': {
+                    'en-US': 'Screen sharing stopped.',
+                    'ar-SA': 'توقفت مشاركة الشاشة.'
+                },
+                'allCleared': {
+                    'en-US': 'All cleared. Ready to start again.',
+                    'ar-SA': 'تم مسح الكل. جاهز للبدء مرة أخرى.'
+                },
+                'error': {
+                    'en-US': 'Error: ',
+                    'ar-SA': 'خطأ: '
+                }
+            };
+            
+            // Domain-specific vocabulary for Arabic
+            const domainVocabularies = {
+                'general': [
+                    { ar: 'شكرًا جزيلًا', en: 'Thank you very much' },
+                    { ar: 'مرحبًا بكم', en: 'Welcome' },
+                    { ar: 'من فضلك', en: 'Please' },
+                    { ar: 'نعم', en: 'Yes' },
+                    { ar: 'لا', en: 'No' },
+                    { ar: 'ممتاز', en: 'Excellent' },
+                    { ar: 'بالتأكيد', en: 'Certainly' },
+                    { ar: 'بالطبع', en: 'Of course' },
+                    { ar: 'إن شاء الله', en: 'God willing' },
+                    { ar: 'مع السلامة', en: 'Goodbye' },
+                    { ar: 'طيب', en: 'Okay' },
+                    { ar: 'تمام', en: 'Perfect' }
+                ],
+                'technical': [
+                    { ar: 'الذكاء الاصطناعي', en: 'Artificial Intelligence' },
+                    { ar: 'تعلم الآلة', en: 'Machine Learning' },
+                    { ar: 'معالجة اللغة الطبيعية', en: 'Natural Language Processing' },
+                    { ar: 'تحليل البيانات', en: 'Data Analysis' },
+                    { ar: 'الواجهة البرمجية للتطبيقات', en: 'API' },
+                    { ar: 'قاعدة البيانات', en: 'Database' },
+                    { ar: 'برمجة', en: 'Programming' },
+                    { ar: 'خوارزمية', en: 'Algorithm' },
+                    { ar: 'تعلم عميق', en: 'Deep Learning' },
+                    { ar: 'بيانات ضخمة', en: 'Big Data' },
+                    { ar: 'حوسبة سحابية', en: 'Cloud Computing' },
+                    { ar: 'أمن المعلومات', en: 'Cybersecurity' },
+                    { ar: 'واجهة المستخدم', en: 'User Interface' },
+                    { ar: 'تجربة المستخدم', en: 'User Experience' }
+                ],
+                'business': [
+                    { ar: 'اجتماع', en: 'Meeting' },
+                    { ar: 'تقرير', en: 'Report' },
+                    { ar: 'عرض تقديمي', en: 'Presentation' },
+                    { ar: 'مشروع', en: 'Project' },
+                    { ar: 'استراتيجية', en: 'Strategy' },
+                    { ar: 'ميزانية', en: 'Budget' },
+                    { ar: 'مبيعات', en: 'Sales' },
+                    { ar: 'تسويق', en: 'Marketing' },
+                    { ar: 'خطة عمل', en: 'Business Plan' },
+                    { ar: 'إدارة المشاريع', en: 'Project Management' },
+                    { ar: 'موارد بشرية', en: 'Human Resources' },
+                    { ar: 'تحليل تنافسي', en: 'Competitive Analysis' },
+                    { ar: 'إيرادات', en: 'Revenue' },
+                    { ar: 'أرباح', en: 'Profits' },
+                    { ar: 'مستثمرين', en: 'Investors' }
+                ],
+                'education': [
+                    { ar: 'تعليم', en: 'Education' },
+                    { ar: 'طالب', en: 'Student' },
+                    { ar: 'مدرس', en: 'Teacher' },
+                    { ar: 'محاضرة', en: 'Lecture' },
+                    { ar: 'امتحان', en: 'Exam' },
+                    { ar: 'مناهج دراسية', en: 'Curriculum' },
+                    { ar: 'جامعة', en: 'University' },
+                    { ar: 'مدرسة', en: 'School' },
+                    { ar: 'بحث علمي', en: 'Research' },
+                    { ar: 'واجب منزلي', en: 'Homework' },
+                    { ar: 'فصل دراسي', en: 'Semester' },
+                    { ar: 'مكتبة', en: 'Library' },
+                    { ar: 'التعلم عن بعد', en: 'Distance Learning' },
+                    { ar: 'شهادة', en: 'Certificate' }
+                ],
+                'media': [
+                    { ar: 'بث مباشر', en: 'Live Stream' },
+                    { ar: 'فيديو', en: 'Video' },
+                    { ar: 'تسجيل صوتي', en: 'Audio Recording' },
+                    { ar: 'مقابلة', en: 'Interview' },
+                    { ar: 'برنامج', en: 'Program' },
+                    { ar: 'بودكاست', en: 'Podcast' },
+                    { ar: 'قناة', en: 'Channel' },
+                    { ar: 'محتوى', en: 'Content' },
+                    { ar: 'مشاهدين', en: 'Viewers' },
+                    { ar: 'تعليقات', en: 'Comments' },
+                    { ar: 'مشاركة الشاشة', en: 'Screen Sharing' },
+                    { ar: 'جودة البث', en: 'Stream Quality' }
+                ],
+                'medical': [
+                    { ar: 'صحة', en: 'Health' },
+                    { ar: 'طبيب', en: 'Doctor' },
+                    { ar: 'مريض', en: 'Patient' },
+                    { ar: 'علاج', en: 'Treatment' },
+                    { ar: 'أعراض', en: 'Symptoms' },
+                    { ar: 'دواء', en: 'Medicine' },
+                    { ar: 'رعاية صحية', en: 'Healthcare' },
+                    { ar: 'تشخيص', en: 'Diagnosis' },
+                    { ar: 'مستشفى', en: 'Hospital' },
+                    { ar: 'عيادة', en: 'Clinic' }
+                ]
+            };
+            
+            // Function to populate vocabulary based on domain
+            function populateVocabulary(domain = 'general') {
+                vocabularyList.innerHTML = '';
+                const vocabulary = domainVocabularies[domain] || domainVocabularies.general;
+                
+                vocabulary.forEach(term => {
+                    const item = document.createElement('div');
+                    item.className = 'vocabulary-item text-xs px-2 py-1 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded cursor-pointer transition-colors';
+                    
+                    if (languageSelect.value.startsWith('ar')) {
+                        item.classList.add('rtl');
+                        item.textContent = term.ar;
+                        item.title = term.en;
+                    } else {
+                        item.textContent = term.en;
+                        item.title = term.ar;
+                    }
+                    
+                    item.addEventListener('click', () => {
+                        insertTextAtCursor(term.ar);
+                    });
+                    
+                    vocabularyList.appendChild(item);
+                });
+            }
+            
+            // Function to insert text at cursor position or at end of transcript
+            function insertTextAtCursor(text) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                
+                // Find the last text node in the transcript div
+                let lastTextNode = findLastTextNode(transcript);
+                
+                if (!lastTextNode) {
+                    // If no text node exists, create one
+                    lastTextNode = document.createTextNode('');
+                    transcript.appendChild(lastTextNode);
+                }
+                
+                // Set cursor at the end of the last text node
+                range.setStart(lastTextNode, lastTextNode.length);
+                range.setEnd(lastTextNode, lastTextNode.length);
+                
+                // Insert the text
+                const textNode = document.createTextNode(' ' + text + ' ');
+                range.insertNode(textNode);
+                
+                // Move cursor after the inserted text
+                range.setStartAfter(textNode);
+                range.setEndAfter(textNode);
+                
+                // Update the selection
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                // Update the finalTranscript
+                finalTranscript += ' ' + text + ' ';
+                
+                // Auto-translate if enabled
+                if (autoTranslateToggle.checked) {
+                    performTranslation(finalTranscript, translationTargetLang.value);
+                }
+            }
+            
+            // Helper function to find the last text node in an element
+            function findLastTextNode(element) {
+                if (element.nodeType === 3) {
+                    return element;
+                }
+                
+                for (let i = element.childNodes.length - 1; i >= 0; i--) {
+                    const node = element.childNodes[i];
+                    if (node.nodeType === 3 && node.textContent.trim() !== '') {
+                        return node;
+                    } else if (node.nodeType === 1) {
+                        const textNode = findLastTextNode(node);
+                        if (textNode) {
+                            return textNode;
+                        }
+                    }
+                }
+                
+                return null;
+            }
+            
+            // Function to update UI language
+            function updateLanguage(lang) {
+                // Set document direction
+                const isArabic = lang.startsWith('ar');
+                document.body.classList.toggle('rtl', isArabic);
+                transcript.classList.toggle('rtl', isArabic);
+                
+                // Show/hide dialect selector for Arabic
+                dialectSelector.classList.toggle('hidden', !isArabic);
+                
+                // Show/hide vocabulary panel for Arabic
+                vocabularyPanel.classList.toggle('hidden', !isArabic);
+                document.getElementById('advancedArabicSettings').classList.add('hidden');
+                
+                // Add Arabic text class for better typography
+                transcript.classList.toggle('ar-text', isArabic);
+                
+                // Update text elements
+                for (const [id, translations] of Object.entries(elementsToTranslate)) {
+                    const element = document.getElementById(id);
+                    if (element && translations[lang]) {
+                        element.textContent = translations[lang];
+                    }
+                }
+                
+                // Update status message
+                const currentStatus = status.textContent;
+                for (const [key, messages] of Object.entries(statusMessages)) {
+                    if (currentStatus === messages['en-US'] || currentStatus === messages['ar-SA']) {
+                        status.textContent = messages[lang];
+                        break;
+                    }
+                }
+                
+                // Special handling for button texts when in recording state
+                if (recordAudioBtn.textContent === 'Stop Audio Recording' || recordAudioBtn.textContent === 'إيقاف تسجيل الصوت') {
+                    recordAudioBtn.textContent = lang === 'ar-SA' ? 'إيقاف تسجيل الصوت' : 'Stop Audio Recording';
+                }
+                
+                if (recordVideoBtn.textContent === 'Stop Video Recording' || recordVideoBtn.textContent === 'إيقاف تسجيل الفيديو') {
+                    recordVideoBtn.textContent = lang === 'ar-SA' ? 'إيقاف تسجيل الفيديو' : 'Stop Video Recording';
+                }
+                
+                // Populate vocabulary for Arabic
+                if (isArabic) {
+                    populateVocabulary('general');
+                }
+            }
+            
+            // Language selection change
+            languageSelect.addEventListener('change', function() {
+                const selectedLang = this.value;
+                updateLanguage(selectedLang);
+                
+                // If recognition is active, restart it with new language
+                if (isTranscribing && recognition) {
+                    recognition.stop();
+                }
+                
+                // Update translation target language options
+                updateTranslationLanguages();
+            });
+            
+            // Dialect selection change
+            dialectSelect.addEventListener('change', function() {
+                const selectedDialect = this.value;
+                
+                // If recognition is active, restart it with new dialect
+                if (isTranscribing && recognition) {
+                    recognition.lang = selectedDialect;
+                    recognition.stop();
+                }
+            });
+            
+            // Advanced Arabic settings toggle
+            document.getElementById('advancedArabicBtn').addEventListener('click', function() {
+                const advancedSettings = document.getElementById('advancedArabicSettings');
+                advancedSettings.classList.toggle('hidden');
+                
+                this.textContent = advancedSettings.classList.contains('hidden') ? 
+                    (languageSelect.value.startsWith('ar') ? 'إعدادات متقدمة' : 'Advanced Settings') : 
+                    (languageSelect.value.startsWith('ar') ? 'إخفاء الإعدادات' : 'Hide Advanced');
+            });
+            
+            // Force fallback system toggle
+            document.getElementById('forceFallbackToggle').addEventListener('change', function() {
+                arabicFallbackEnabled = this.checked;
+                if (this.checked) {
+                    // Initialize the fallback system if it's not already
+                    if (!fallbackRecognitionEngine) {
+                        initializeArabicFallback();
+                    }
+                    status.textContent = "تم تفعيل النظام البديل للتعرف على الكلام العربي";
+                } else {
+                    status.textContent = "تم تعطيل النظام البديل للتعرف على الكلام العربي";
+                }
+                
+                // If currently transcribing, restart to apply changes
+                if (isTranscribing) {
+                    recognition.stop();
+                }
+            });
+            
+            // Direct text input button
+            document.getElementById('directInputBtn').addEventListener('click', function() {
+                document.getElementById('directInputModal').classList.remove('hidden');
+            });
+            
+            // Direct input cancel button
+            document.getElementById('directInputCancelBtn').addEventListener('click', function() {
+                document.getElementById('directInputModal').classList.add('hidden');
+            });
+            
+            // Direct input submit button
+            document.getElementById('directInputSubmitBtn').addEventListener('click', function() {
+                const directText = document.getElementById('directInputText').value;
+                if (directText.trim()) {
+                    // Process with Arabic text enhancements
+                    const processedText = processArabicTranscript(directText, finalTranscript);
+                    
+                    // Add to transcript with special formatting
+                    finalTranscript += `<span class="inline-block px-1 py-0.5 bg-green-50 text-green-800 border-b border-green-300" 
+                                     title="تم الإدخال يدويًا">
+                                     ${processedText}</span> `;
+                    
+                    // Update display
+                    let formattedTranscript = finalTranscript;
+                    if (languageSelect.value.startsWith('ar')) {
+                        formattedTranscript = '<span class="ar-text">' + formattedTranscript + '</span>';
+                    }
+                    transcript.innerHTML = formattedTranscript;
+                    
+                    // Scroll to bottom
+                    transcript.scrollTop = transcript.scrollHeight;
+                    
+                    // Clear input and hide modal
+                    document.getElementById('directInputText').value = '';
+                    document.getElementById('directInputModal').classList.add('hidden');
+                    
+                    // Auto-translate if enabled
+                    if (autoTranslateToggle.checked) {
+                        performTranslation(finalTranscript.replace(/<[^>]*>/g, ''), translationTargetLang.value);
+                    }
+                }
+            });
+            
+            // Confidence threshold slider
+            document.getElementById('confidenceThreshold').addEventListener('input', function() {
+                document.getElementById('confidenceValue').textContent = this.value + '%';
+            });
+            
+            // Domain selector buttons
+            document.querySelectorAll('.domain-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.domain-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.remove('bg-blue-100');
+                        btn.classList.add('bg-gray-100');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    this.classList.remove('bg-gray-100');
+                    this.classList.add('bg-blue-100');
+                    
+                    // Get the domain
+                    const domain = this.getAttribute('data-domain');
+                    
+                    // Populate vocabulary for selected domain
+                    populateVocabulary(domain);
+                });
+            });
+            
+            // Add custom vocabulary
+            document.getElementById('addVocabularyBtn').addEventListener('click', function() {
+                const input = document.getElementById('customVocabularyInput');
+                const term = input.value.trim();
+                
+                if (term) {
+                    // Create and add vocabulary item
+                    const item = document.createElement('div');
+                    item.className = 'vocabulary-item text-xs px-2 py-1 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded cursor-pointer transition-colors';
+                    
+                    if (languageSelect.value.startsWith('ar')) {
+                        item.classList.add('rtl');
+                    }
+                    
+                    item.textContent = term;
+                    
+                    item.addEventListener('click', function() {
+                        insertTextAtCursor(term);
+                    });
+                    
+                    vocabularyList.appendChild(item);
+                    
+                    // Clear input
+                    input.value = '';
+                }
+            });
+            
+            // Handle Enter key in custom vocabulary input
+            document.getElementById('customVocabularyInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('addVocabularyBtn').click();
+                }
+            });
+            
+            // Copy button functionality
+            copyBtn.addEventListener('click', function() {
+                const textToCopy = transcript.innerText || transcript.textContent;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = this.textContent;
+                    this.textContent = languageSelect.value.startsWith('ar') ? 'تم النسخ!' : 'Copied!';
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 2000);
+                });
+            });
+            
+            // Download text button functionality
+            downloadTextBtn.addEventListener('click', function() {
+                const textToDownload = transcript.innerText || transcript.textContent;
+                const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'transcript_' + new Date().toISOString() + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+            
+            // Submit correction button
+            document.getElementById('submitCorrectionBtn').addEventListener('click', function() {
+                submitCorrection();
+            });
+            
+            // Handle Enter key in correction input
+            document.getElementById('correctionInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitCorrection();
+                }
+            });
+            
+            // Function to submit correction
+            function submitCorrection() {
+                const input = document.getElementById('correctionInput');
+                const correction = input.value.trim();
+                const targetIndex = input.getAttribute('data-target-segment');
+                
+                if (correction && targetIndex !== null) {
+                    // Get the segment to correct
+                    const segments = document.querySelectorAll('.word-segment');
+                    if (targetIndex < segments.length) {
+                        const segment = segments[targetIndex];
+                        
+                        // Update the segment with the correction
+                        segment.textContent = correction;
+                        segment.setAttribute('data-original', correction);
+                        segment.classList.remove('bg-red-50', 'border-red-300');
+                        segment.classList.add('bg-green-50', 'border-green-300');
+                        
+                        // Add to custom vocabulary if it doesn't exist
+                        let exists = false;
+                        document.querySelectorAll('.vocabulary-item').forEach(item => {
+                            if (item.textContent === correction) {
+                                exists = true;
+                            }
+                        });
+                        
+                        if (!exists) {
+                            // Add to vocabulary
+                            const item = document.createElement('div');
+                            item.className = 'vocabulary-item text-xs px-2 py-1 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded cursor-pointer transition-colors';
+                            
+                            if (languageSelect.value.startsWith('ar')) {
+                                item.classList.add('rtl');
+                            }
+                            
+                            item.textContent = correction;
+                            
+                            item.addEventListener('click', function() {
+                                insertTextAtCursor(correction);
+                            });
+                            
+                            vocabularyList.appendChild(item);
+                        }
+                        
+                        // Hide correction panel
+                        document.getElementById('correctionPanel').classList.add('hidden');
+                        
+                        // Auto-translate if enabled
+                        if (autoTranslateToggle.checked) {
+                            const cleanTranscript = transcript.innerText.replace(/[\n\r]+/g, ' ');
+                            performTranslation(cleanTranscript, translationTargetLang.value);
+                        }
+                    }
+                }
+            }
+            
+            // Translation functions
+            
+            // Translation button click
+            translateBtn.addEventListener('click', function() {
+                // Get the source text (clean up HTML tags)
+                const sourceText = transcript.innerText || transcript.textContent;
+                
+                if (!sourceText.trim()) {
+                    return; // Nothing to translate
+                }
+                
+                // Get the target language
+                const targetLang = translationTargetLang.value;
+                
+                // Perform translation
+                performTranslation(sourceText, targetLang);
+            });
+            
+            // Auto-translate functionality
+            let lastTranscriptText = '';
+            
+            // Function to check if transcription has changed significantly
+            function hasTranscriptChangedSignificantly(oldText, newText) {
+                // Consider significant change when more than 10 characters are added
+                return newText.length - oldText.length > 10;
+            }
+            
+            // Function to perform translation with the Lecto.ai API
+            async function performTranslation(text, targetLang) {
+    // Show loading indicator
+    document.getElementById('translationLoading').classList.remove('hidden');
+    translatedText.classList.add('hidden');
+    
+    try {
+        // Get target language code (just the first part, e.g. 'en' from 'en-US')
+        const targetCode = targetLang.split('-')[0];
+        
+        // URL encode the text
+        const encodedText = encodeURIComponent(text);
+        
+        // Prepare request to Google Translate API
+        const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetCode}&dt=t&q=${encodedText}`);
+        
+        if (!response.ok) {
+            throw new Error(`Translation API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Extract the translated text from the response
+        // Format: [[["translated text","original text",null,null,10]],null,"detected-language",...]
+        if (data && data[0]) {
+            let translatedTextContent = '';
+            
+            // Concatenate all translated segments
+            for (let i = 0; i < data[0].length; i++) {
+                if (data[0][i][0]) {
+                    translatedTextContent += data[0][i][0];
+                }
+            }
+            
+            // Update the UI with translated text
+            translatedText.innerHTML = translatedTextContent;
+            
+            // Set appropriate text direction based on target language
+            if (targetLang.startsWith('ar')) {
+                translatedText.style.direction = 'rtl';
+                translatedText.classList.add('rtl', 'font-arabic');
+            } else {
+                translatedText.style.direction = 'ltr';
+                translatedText.classList.remove('rtl', 'font-arabic');
+            }
+            
+            // Update translation info
+            const detectedLanguage = data[2] || 'auto';
+            document.getElementById('translationInfo').textContent = 
+                `${getLanguageName(detectedLanguage)} → ${getLanguageName(targetLang)}`;
+            
+            return translatedTextContent;
+        }
+        
+        throw new Error('Unable to extract translation from response');
+    } catch (error) {
+        console.error('Translation error:', error);
+        translatedText.innerHTML = 
+            `<div class="p-2 text-red-700 bg-red-50 rounded border border-red-200">${error.message}. Please try again.</div>`;
+        return null;
+    } finally {
+        // Hide loading indicator
+        document.getElementById('translationLoading').classList.add('hidden');
+        translatedText.classList.remove('hidden');
+    }
+} 
+            // Copy translation button
+            document.getElementById('copyTranslationBtn').addEventListener('click', function() {
+                const textToCopy = translatedText.innerText || translatedText.textContent;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = this.textContent;
+                    this.textContent = translationTargetLang.value.startsWith('ar') ? 'تم النسخ!' : 'Copied!';
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 2000);
+                });
+            });
+            
+            // Download translation button
+            document.getElementById('downloadTranslationBtn').addEventListener('click', function() {
+                const textToDownload = translatedText.innerText || translatedText.textContent;
+                const targetLang = translationTargetLang.value;
+                const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'translation_' + targetLang + '_' + new Date().toISOString() + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+            
+            // Auto-update target language dropdown when source language changes
+            function updateTranslationLanguages() {
+                const sourceLang = languageSelect.value;
+                const targetLangSelect = document.getElementById('translationTargetLang');
+                const currentTarget = targetLangSelect.value;
+                
+                // Save the current options
+                const options = Array.from(targetLangSelect.options).map(opt => ({
+                    value: opt.value,
+                    text: opt.text
+                }));
+                
+                // Clear options
+                targetLangSelect.innerHTML = '';
+                
+                // Add all options except the current source language
+                options.forEach(opt => {
+                    if (opt.value !== sourceLang) {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.text = opt.text;
+                        targetLangSelect.add(option);
+                    }
+                });
+                
+                // If the previous target is now the source, select a default
+                if (currentTarget === sourceLang) {
+                    // Default to English if source is not English
+                    if (sourceLang !== 'en-US') {
+                        targetLangSelect.value = 'en-US';
+                    } 
+                    // Default to Arabic if source is English
+                    else {
+                        targetLangSelect.value = 'ar-SA';
+                    }
+                } else {
+                    // Try to keep the previous target
+                    try {
+                        targetLangSelect.value = currentTarget;
+                    } catch (e) {
+                        // If not available, select the first option
+                        if (targetLangSelect.options.length > 0) {
+                            targetLangSelect.selectedIndex = 0;
+                        }
+                    }
+                }
+            }
+            
+            // Helper function to get language name from code
+            function getLanguageName(langCode) {
+                const languages = {
+                    'en-US': 'English',
+                    'ar-SA': 'Arabic',
+                    'fr-FR': 'French',
+                    'es-ES': 'Spanish',
+                    'de-DE': 'German',
+                    'zh-CN': 'Chinese',
+                    'ja-JP': 'Japanese',
+                    'ru-RU': 'Russian'
+                };
+                
+                return languages[langCode] || langCode;
+            }
+            
+            // Speech recognition setup with extended Arabic support
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            let isTranscribing = false;
+            let finalTranscript = '';
+            let recognitionErrorCount = 0;
+            const MAX_RECOGNITION_ERRORS = 3;
+            
+            // Create a fallback system for Arabic speech recognition
+            let arabicFallbackEnabled = false;
+            let fallbackRecognitionEngine = null;
+            
+            function initializeSpeechRecognition() {
+                if (!SpeechRecognition) {
+                    const lang = languageSelect.value;
+                    status.textContent = statusMessages.error[lang] + 'Speech recognition not supported in this browser.';
+                    startTranscribeBtn.disabled = true;
+                    stopTranscribeBtn.disabled = true;
+                    return;
+                }
+                
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                
+                // Test Arabic support before proceeding
+                const isArabic = languageSelect.value.startsWith('ar');
+                
+                // Set language based on language and dialect selections
+                if (isArabic) {
+                    recognition.lang = dialectSelect.value;
+                    
+                    // Check if we need to use the fallback system
+                    testArabicSupport()
+                      .then(supported => {
+                          if (!supported) {
+                              arabicFallbackEnabled = true;
+                              status.textContent = "Native Arabic recognition limited. Using enhanced mode.";
+                              console.log("Using Arabic recognition fallback system");
+                              // Initialize the fallback system
+                              initializeArabicFallback();
+                          } else {
+                              arabicFallbackEnabled = false;
+                          }
+                      });
+                } else {
+                    recognition.lang = languageSelect.value;
+                    arabicFallbackEnabled = false;
+                }
+                
+                // Enhanced settings for Arabic
+                if (isArabic) {
+                    // Apply best-practice settings for Arabic recognition
+                    recognition.maxAlternatives = 5; // Get multiple alternatives for Arabic
+                    
+                    // For browsers that support it, increase the recognition timeout
+                    try {
+                        recognition.continuous = true; // Keep recognition going
+                        recognition.interimResults = true; // Show interim results
+                        recognition.maxAlternatives = 5; // Request multiple alternatives
+                    } catch (e) {
+                        console.log("Browser doesn't support extended recognition settings");
+                    }
+                }
+                
+                // Function to test if Arabic speech recognition is fully supported
+                async function testArabicSupport() {
+                    return new Promise((resolve) => {
+                        // Create a test recognition instance
+                        const testRecognition = new SpeechRecognition();
+                        testRecognition.lang = dialectSelect.value;
+                        let testStarted = false;
+                        
+                        testRecognition.onstart = function() {
+                            testStarted = true;
+                            // If it starts, we'll give it 2 seconds then assume it's working
+                            setTimeout(() => {
+                                testRecognition.stop();
+                                resolve(true);
+                            }, 2000);
+                        };
+                        
+                        testRecognition.onerror = function(event) {
+                            if (event.error === 'language-not-supported' || 
+                                event.error === 'not-allowed' || 
+                                event.error === 'service-not-allowed') {
+                                resolve(false);
+                            } else if (!testStarted) {
+                                resolve(false);
+                            }
+                        };
+                        
+                        // Set a timeout in case the recognition doesn't trigger any events
+                        setTimeout(() => {
+                            if (!testStarted) {
+                                resolve(false);
+                            }
+                        }, 3000);
+                        
+                        try {
+                            testRecognition.start();
+                        } catch (err) {
+                            resolve(false);
+                        }
+                    });
+                }
+                
+                // Initialize Arabic fallback system if needed
+                function initializeArabicFallback() {
+                    // This implements a hybrid approach for Arabic recognition
+                    // It will use the browser's recognition but enhance it with custom processing
+                    fallbackRecognitionEngine = {
+                        isActive: false,
+                        recognitionBuffer: [],
+                        customDictionary: {
+                            // Common Arabic phrases and their phonetic approximations
+                            // These help bridge browser recognition gaps
+                            'as-salamu alaykum': 'السلام عليكم',
+                            'alhamdulillah': 'الحمد لله',
+                            'shukran': 'شكراً',
+                            'afwan': 'عفواً',
+                            'naam': 'نعم',
+                            'la': 'لا',
+                            'kaifa haloka': 'كيف حالك',
+                            'tayyib': 'طيب',
+                            'mumtaz': 'ممتاز',
+                            'marhaba': 'مرحبا',
+                            'sabah alkhayr': 'صباح الخير',
+                            'masa alkhayr': 'مساء الخير',
+                            'min fadlak': 'من فضلك',
+                            'inshallah': 'إن شاء الله',
+                            // Add more common phrases
+                        },
+                        
+                        // Process text that comes from the standard speech recognition
+                        enhanceRecognition: function(text) {
+                            // First, check if any of our phonetic mappings match
+                            for (const [phonetic, arabic] of Object.entries(this.customDictionary)) {
+                                if (text.toLowerCase().includes(phonetic.toLowerCase())) {
+                                    text = text.toLowerCase().replace(new RegExp(phonetic, 'gi'), arabic);
+                                }
+                            }
+                            
+                            // Apply aggressive Arabic text correction
+                            text = improveArabicText(text);
+                            
+                            return text;
+                        },
+                        
+                        // Add words to the custom dictionary
+                        addToDictionary: function(phonetic, arabic) {
+                            this.customDictionary[phonetic.toLowerCase()] = arabic;
+                        }
+                    };
+                }
+                
+                recognition.onstart = function() {
+                    status.textContent = statusMessages.transcribing[languageSelect.value];
+                    isTranscribing = true;
+                    startTranscribeBtn.disabled = true;
+                    stopTranscribeBtn.disabled = false;
+                    // Reset error count on successful start
+                    recognitionErrorCount = 0;
+                    
+                    // Enable diagnostic mode for Arabic to help identify issues
+                    if (languageSelect.value.startsWith('ar')) {
+                        // Show diagnostic message
+                        const diagnosticMsg = document.createElement('div');
+                        diagnosticMsg.className = 'p-2 mb-3 bg-green-50 text-green-700 text-sm rounded-md border border-green-200';
+                        diagnosticMsg.innerHTML = `<strong>Arabic Diagnostic Mode:</strong> Speech recognition starting with settings: 
+                                                <br>Dialect: ${dialectSelect.value}, 
+                                                <br>Fallback Mode: ${arabicFallbackEnabled ? 'Enabled' : 'Disabled'}`;
+                        
+                        // Insert before the transcript
+                        transcript.parentNode.insertBefore(
+                            diagnosticMsg, 
+                            transcript
+                        );
+                        
+                        // Remove after 5 seconds
+                        setTimeout(() => {
+                            if (diagnosticMsg.parentNode) {
+                                diagnosticMsg.parentNode.removeChild(diagnosticMsg);
+                            }
+                        }, 5000);
+                    }
+                };
+                
+                recognition.onend = function() {
+                    if (isTranscribing && recognitionErrorCount < MAX_RECOGNITION_ERRORS) {
+                        // Only restart if we haven't had too many errors
+                        setTimeout(() => {
+                            try {
+                                // Update language setting before restarting
+                                if (languageSelect.value.startsWith('ar')) {
+                                    recognition.lang = dialectSelect.value;
+                                } else {
+                                    recognition.lang = languageSelect.value;
+                                }
+                                recognition.start();
+                            } catch (err) {
+                                console.error('Error restarting recognition:', err);
+                                isTranscribing = false;
+                                status.textContent = statusMessages.transcribingStopped[languageSelect.value];
+                                startTranscribeBtn.disabled = false;
+                                stopTranscribeBtn.disabled = true;
+                            }
+                        }, 1000); // Add delay to prevent rapid restarts
+                    } else {
+                        isTranscribing = false;
+                        status.textContent = statusMessages.transcribingStopped[languageSelect.value];
+                        startTranscribeBtn.disabled = false;
+                        stopTranscribeBtn.disabled = true;
+                    }
+                };
+                
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    
+                    // Get the confidence threshold value
+                    const confidenceThreshold = document.getElementById('confidenceThreshold')?.value ?? 60;
+                    const confidenceValue = confidenceThreshold / 100;
+                    
+                    // Log Arabic recognition results for debugging
+                    if (languageSelect.value.startsWith('ar')) {
+                        console.log("Arabic recognition event received:", event.results);
+                    }
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const result = event.results[i];
+                        
+                        // Process Arabic recognition with fallback system if enabled
+                        if (languageSelect.value.startsWith('ar') && arabicFallbackEnabled) {
+                            let transcriptText = result[0].transcript;
+                            
+                            // Apply our fallback enhancement for Arabic
+                            if (fallbackRecognitionEngine) {
+                                transcriptText = fallbackRecognitionEngine.enhanceRecognition(transcriptText);
+                                
+                                // Add to recognition buffer for analysis
+                                fallbackRecognitionEngine.recognitionBuffer.push({
+                                    original: result[0].transcript,
+                                    enhanced: transcriptText,
+                                    confidence: result[0].confidence
+                                });
+                                
+                                // Display diagnostic info
+                                console.log(`Original: "${result[0].transcript}" → Enhanced: "${transcriptText}"`);
+                            }
+                            
+                            // Apply our advanced Arabic processing
+                            transcriptText = processArabicTranscript(transcriptText, finalTranscript);
+                            
+                            // Special formatting for fallback mode
+                            if (result.isFinal) {
+                                const confidence = Math.round(result[0].confidence * 100);
+                                
+                                transcriptText = `<span class="inline-block px-1 py-0.5 bg-purple-50 text-purple-800 border-b border-purple-300" 
+                                                title="Original: ${result[0].transcript}">
+                                                ${transcriptText}</span> `;
+                                                
+                                finalTranscript += transcriptText;
+                            } else {
+                                interimTranscript += transcriptText;
+                            }
+                            
+                            continue; // Skip the standard processing for Arabic fallback
+                        }
+                        
+                        // Standard processing for non-fallback cases
+                        // Skip results with low confidence for Arabic
+                        if (languageSelect.value.startsWith('ar') && result[0].confidence < confidenceValue) {
+                            // Attempt to use alternative recognition results if available
+                            let bestAlternative = null;
+                            let bestConfidence = 0;
+                            
+                            // Check if alternatives exist (depends on browser support)
+                            for (let j = 1; j < result.length; j++) {
+                                if (result[j].confidence > bestConfidence && result[j].confidence >= confidenceValue) {
+                                    bestAlternative = result[j].transcript;
+                                    bestConfidence = result[j].confidence;
+                                }
+                            }
+                            
+                            // If we found a better alternative, use it
+                            if (bestAlternative) {
+                                let transcriptText = bestAlternative;
+                                // Process the Arabic text with advanced options
+                                if (languageSelect.value.startsWith('ar')) {
+                                    transcriptText = processArabicTranscript(transcriptText, finalTranscript);
+                                }
+                                
+                                if (result.isFinal) {
+                                    finalTranscript += transcriptText + ' ';
+                                } else {
+                                    interimTranscript += transcriptText;
+                                }
+                            }
+                            // If no good alternative, we skip this result entirely
+                            continue;
+                        }
+                        
+                        let transcriptText = result[0].transcript;
+                        
+                        // Advanced Arabic text processing
+                        if (languageSelect.value.startsWith('ar')) {
+                            transcriptText = processArabicTranscript(transcriptText, finalTranscript);
+                        }
+                        
+                        // Add span with confidence data for Arabic
+                        if (languageSelect.value.startsWith('ar') && result.isFinal) {
+                            const confidence = Math.round(result[0].confidence * 100);
+                            let confidenceClass = 'bg-green-50 text-green-800 border-b border-green-300';
+                            
+                            if (confidence < 60) {
+                                confidenceClass = 'bg-red-50 text-red-800 border-b border-red-300';
+                            } else if (confidence < 80) {
+                                confidenceClass = 'bg-amber-50 text-amber-800 border-b border-amber-300';
+                            }
+                            
+                            // Add data attributes for word-by-word correction (right-click functionality)
+                            transcriptText = `<span class="word-segment inline-block px-1 py-0.5 ${confidenceClass}" 
+                                            data-confidence="${confidence}" 
+                                            data-original="${transcriptText.trim()}"
+                                            title="Confidence: ${confidence}%">${transcriptText}</span> `;
+                                            
+                            finalTranscript += transcriptText;
+                        } else if (result.isFinal) {
+                            finalTranscript += transcriptText + ' ';
+                        } else {
+                            interimTranscript += transcriptText;
+                        }
+                    }
+                    
+                    // Format the final and interim transcripts
+                    let formattedTranscript = finalTranscript;
+                    if (interimTranscript) {
+                        formattedTranscript += '<span class="text-gray-500 italic">' + interimTranscript + '</span>';
+                    }
+                    
+                    // Apply Arabic-specific formatting if needed
+                    if (languageSelect.value.startsWith('ar')) {
+                        formattedTranscript = '<span class="ar-text">' + formattedTranscript + '</span>';
+                    }
+                    
+                    transcript.innerHTML = formattedTranscript;
+                    
+                    // Add event listeners for word correction on right-click
+                    if (languageSelect.value.startsWith('ar')) {
+                        document.querySelectorAll('.word-segment').forEach(segment => {
+                            segment.addEventListener('contextmenu', function(e) {
+                                e.preventDefault();
+                                
+                                // Display correction panel
+                                const correctionPanel = document.getElementById('correctionPanel');
+                                correctionPanel.classList.remove('hidden');
+                                
+                                // Set the correction input value to the original text
+                                const correctionInput = document.getElementById('correctionInput');
+                                correctionInput.value = this.getAttribute('data-original');
+                                
+                                // Store reference to the segment being corrected
+                                correctionInput.setAttribute('data-target-segment', Array.from(document.querySelectorAll('.word-segment')).indexOf(this));
+                                
+                                // Focus the input
+                                correctionInput.focus();
+                                correctionInput.select();
+                            });
+                        });
+                    }
+                    
+                    // Scroll to bottom
+                    transcript.scrollTop = transcript.scrollHeight;
+                    
+                    // Auto-translate if enabled and content has changed significantly
+                    if (autoTranslateToggle.checked && 
+                        finalTranscript && 
+                        hasTranscriptChangedSignificantly(lastTranscriptText, finalTranscript)) {
+                        
+                        // Extract clean text from transcript (removing HTML tags)
+                        const cleanTranscript = transcript.innerText.replace(/[\n\r]+/g, ' ');
+                        lastTranscriptText = finalTranscript;
+                        
+                        // Perform translation
+                        performTranslation(cleanTranscript, translationTargetLang.value);
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event.error);
+                    
+                    // Count errors to prevent infinite loops
+                    recognitionErrorCount++;
+                    
+                    if (recognitionErrorCount >= MAX_RECOGNITION_ERRORS) {
+                        isTranscribing = false;
+                        status.textContent = statusMessages.error[languageSelect.value] + 
+                            (languageSelect.value.startsWith('ar') ? 
+                                'توقف النسخ بسبب أخطاء متكررة.' : 
+                                'Transcription stopped due to repeated errors.');
+                        startTranscribeBtn.disabled = false;
+                        stopTranscribeBtn.disabled = true;
+                    } else {
+                        status.textContent = statusMessages.error[languageSelect.value] + event.error;
+                    }
+                };
+            }
+            
+            // Function to improve Arabic text formatting and punctuation with advanced options
+            function improveArabicText(text) {
+                // Get settings
+                const autoCorrect = document.getElementById('autoCorrectToggle')?.checked ?? true;
+                const useDiacritics = document.getElementById('diacriticsToggle')?.checked ?? false;
+                const useArabicNumerals = document.getElementById('numeralsToggle')?.checked ?? true;
+                const contextualBoost = document.getElementById('contextualBoostSelect')?.value ?? 'medium';
+                
+                // Always replace latin punctuation with Arabic punctuation
+                text = text.replace(/\?/g, '؟')
+                           .replace(/,/g, '،')
+                           .replace(/;/g, '؛')
+                           .replace(/\(/g, '﴿')
+                           .replace(/\)/g, '﴾');
+                
+                // Convert western numerals to Arabic numerals if enabled
+                if (useArabicNumerals) {
+                    text = text.replace(/0/g, '٠')
+                               .replace(/1/g, '١')
+                               .replace(/2/g, '٢')
+                               .replace(/3/g, '٣')
+                               .replace(/4/g, '٤')
+                               .replace(/5/g, '٥')
+                               .replace(/6/g, '٦')
+                               .replace(/7/g, '٧')
+                               .replace(/8/g, '٨')
+                               .replace(/9/g, '٩');
+                }
+                
+                // Apply autocorrection if enabled
+                if (autoCorrect) {
+                    // Comprehensive list of common Arabic recognition errors
+                    const commonErrorFixes = {
+                        // Basic corrections
+                        'انا': 'أنا',
+                        'الي': 'إلى',
+                        'فى': 'في',
+                        'انت': 'أنت',
+                        'هذه': 'هٰذِهِ',
+                        'هذا': 'هٰذَا',
+                        'ذلك': 'ذٰلِكَ',
+                        'لكن': 'لٰكِن',
+                        'علي': 'على',
+                        
+                        // Initial alef corrections
+                        'الان': 'الآن',
+                        'اذا': 'إذا',
+                        'ايضا': 'أيضاً',
+                        'احد': 'أحد',
+                        'او': 'أو',
+                        'اي': 'أي',
+                        'امر': 'أمر',
+                        'اخر': 'آخر',
+                        
+                        // Common word patterns
+                        'اسلام': 'إسلام',
+                        'انسان': 'إنسان',
+                        'اجتماع': 'اجتماع',
+                        'استخدام': 'استخدام',
+                        'انتهاء': 'انتهاء',
+                        'ابداء': 'ابداء',
+                        
+                        // Word endings with tanween
+                        'شكرا': 'شكراً',
+                        'ايضا': 'أيضاً',
+                        'جدا': 'جداً',
+                        'غدا': 'غداً',
+                        'ابدا': 'أبداً',
+                        
+                        // Dialectal variations
+                        'عشان': 'لأجل',
+                        'بس': 'لكن',
+                        'يعني': 'يعني',
+                        'خلاص': 'خلاص',
+                        
+                        // Technical terms often misrecognized
+                        'انترنت': 'إنترنت',
+                        'كمبيوتر': 'كمبيوتر',
+                        'برنامج': 'برنامج',
+                        'تطبيق': 'تطبيق',
+                        'فديو': 'فيديو',
+                        'ويب': 'ويب'
+                    };
+                    
+                    // Extend corrections based on contextual boost level
+                    if (contextualBoost === 'high') {
+                        // Add more aggressive corrections for high contextual boost
+                        Object.assign(commonErrorFixes, {
+                            'من فضلك': 'من فضلك',
+                            'ان شاء الله': 'إن شاء الله',
+                            'السلام عليكم': 'السلام عليكم',
+                            'الحمد لله': 'الحمد لله',
+                            'ما شاء الله': 'ما شاء الله',
+                            'في الحقيقة': 'في الحقيقة',
+                            'علي اي حال': 'على أي حال',
+                            'بالتاكيد': 'بالتأكيد',
+                            'مع الاسف': 'مع الأسف'
+                        });
+                    }
+                    
+                    // Apply fixes
+                    for (const [error, fix] of Object.entries(commonErrorFixes)) {
+                        // Use word boundary in regex to ensure we're replacing whole words
+                        const regex = new RegExp('\\b' + error + '\\b', 'g');
+                        text = text.replace(regex, useDiacritics ? fix : fix.replace(/[\u064B-\u0652]/g, ''));
+                    }
+                    
+                    // Fix common spacing issues
+                    text = text.replace(/ +/g, ' '); // Multiple spaces to single space
+                    text = text.replace(/\s([.,،؛;!?؟])/g, '$1'); // Remove space before punctuation
+                    
+                    // Smart quotes for Arabic (uncomment if needed)
+                    // text = text.replace(/"/g, '"').replace(/"/g, '"');
+                    
+                    // Additional contextual fixes based on neighboring words
+                    if (contextualBoost === 'high' || contextualBoost === 'medium') {
+                        // Fix compound phrases
+                        text = text.replace(/في ما/g, 'فيما');
+                        text = text.replace(/علي ما/g, 'على ما');
+                        text = text.replace(/الي ان/g, 'إلى أن');
+                        text = text.replace(/بعد ما/g, 'بعدما');
+                        text = text.replace(/قبل ما/g, 'قبلما');
+                    }
+                }
+                
+                // Remove diacritics if not enabled
+                if (!useDiacritics) {
+                    text = text.replace(/[\u064B-\u0652]/g, '');
+                }
+                
+                return text;
+            }
+            
+            // Advanced Arabic text processing function - helps with context awareness
+            function processArabicTranscript(text, previousText = '') {
+                let processedText = improveArabicText(text);
+                const contextualBoost = document.getElementById('contextualBoostSelect')?.value ?? 'medium';
+                
+                // Skip further processing if contextual boost is low
+                if (contextualBoost === 'low') {
+                    return processedText;
+                }
+                
+                // Create context-aware corrections based on previous text
+                if (previousText && (contextualBoost === 'medium' || contextualBoost === 'high')) {
+                    // Extract last few words from previous text for context
+                    const lastWords = previousText.split(/\s+/).slice(-3).join(' ');
+                    
+                    // Example contextual fixes based on previous words
+                    // These patterns look for specific word sequences and correct the current text
+                   // Example contextual fixes based on previous words
+                    // These patterns look for specific word sequences and correct the current text
+                    if (/الذكاء الاصطناعي/.test(lastWords)) {
+                        processedText = processedText.replace(/يستخدم/g, 'يستخدم');
+                        processedText = processedText.replace(/البيانات/g, 'البيانات');
+                    }
+                    
+                    if (/سوف|سوفا|س/.test(lastWords)) {
+                        processedText = processedText.replace(/^اقوم/, 'أقوم');
+                        processedText = processedText.replace(/^افعل/, 'أفعل');
+                    }
+                    
+                    // Question context
+                    if (/ماذا|كيف|لماذا|متى|اين/.test(lastWords)) {
+                        processedText = processedText.replace(/^انا/, 'أنا');
+                        processedText = processedText.replace(/^نحن/, 'نحن');
+                    }
+                }
+                
+                // Additional aggressive processing for high contextual boost
+                if (contextualBoost === 'high') {
+                    // Domain-specific corrections based on detected content
+                    if (/تعليم|مدرسة|طلاب|جامعة|دراسة/.test(processedText)) {
+                        // Education domain corrections
+                        processedText = processedText.replace(/محاضرة/g, 'محاضرة');
+                        processedText = processedText.replace(/امتحان/g, 'امتحان');
+                    } else if (/برمجة|كود|تطوير|برنامج/.test(processedText)) {
+                        // Programming domain corrections
+                        processedText = processedText.replace(/جافا سكريبت/g, 'جافاسكريبت');
+                        processedText = processedText.replace(/الخوارزمية/g, 'الخوارزمية');
+                    }
+                }
+                
+                return processedText;
+            }
+            
+            // Initialize speech recognition
+            initializeSpeechRecognition();
+            
+            // Start transcribing button
+            startTranscribeBtn.onclick = function() {
+                if (screenStream && screenStream.getAudioTracks().length > 0) {
+                    // Set up audio processing only when the user explicitly starts transcription
+                    try {
+                        if (!audioContext) {
+                            const audioSetupSuccess = setupAudioForTranscription(screenStream);
+                            if (!audioSetupSuccess) {
+                                throw new Error("Failed to set up audio processing");
+                            }
+                        }
+                        
+                        // Make sure recognition has the current language
+                        if (languageSelect.value.startsWith('ar')) {
+                            recognition.lang = dialectSelect.value;
+                        } else {
+                            recognition.lang = languageSelect.value;
+                        }
+                        
+                        // Start recognition
+                        isTranscribing = true;
+                        
+                        try {
+                            recognition.start();
+                        } catch (err) {
+                            console.error('Error starting recognition:', err);
+                            
+                            // If we failed to start, try a different approach for Arabic
+                            if (languageSelect.value.startsWith('ar')) {
+                                // Force fallback mode and try again
+                                arabicFallbackEnabled = true;
+                                initializeArabicFallback();
+                                
+                                // Try with English as intermediary (this sometimes works as a workaround)
+                                recognition.lang = 'en-US';
+                                setTimeout(() => {
+                                    try {
+                                        recognition.start();
+                                        status.textContent = "Using alternative Arabic recognition method";
+                                    } catch (err2) {
+                                        console.error('Second attempt failed:', err2);
+                                        status.textContent = statusMessages.error[languageSelect.value] + "Cannot start Arabic recognition. Try switching browsers.";
+                                        isTranscribing = false;
+                                    }
+                                }, 500);
+                            } else {
+                                status.textContent = statusMessages.error[languageSelect.value] + err.message;
+                                isTranscribing = false;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error starting transcription:', err);
+                        status.textContent = statusMessages.error[languageSelect.value] + err.message;
+                    }
+                } else {
+                    status.textContent = statusMessages.error[languageSelect.value] + 
+                        (languageSelect.value.startsWith('ar') ? 
+                            'لا يوجد صوت متاح من الشاشة. يرجى مشاركة الشاشة مع الصوت أولاً.' : 
+                            'No screen audio available. Please share your screen with audio first.');
+                }
+            };
+            
+            // Stop transcribing button
+            stopTranscribeBtn.onclick = function() {
+                isTranscribing = false;
+                if (recognition) {
+                    recognition.stop();
+                }
+            };
+            
+            // Screen sharing variables
+            let screenStream = null;
+            let audioContext = null;
+            let mediaStreamSource = null;
+            let mediaStreamDestination = null;
+            
+            // Function to connect audio nodes for transcription
+            function setupAudioForTranscription(stream) {
+                if (!stream.getAudioTracks() || stream.getAudioTracks().length === 0) {
+                    console.warn("No audio tracks found in the stream");
+                    audioAlert.classList.remove('hidden');
+                    return false;
+                }
+                
+                // If we already have an audio context set up, don't create another one
+                if (audioContext) {
+                    return true;
+                }
+                
+                try {
+                    // Create audio context with proper error handling
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) {
+                        throw new Error("AudioContext not supported in this browser");
+                    }
+                    
+                    audioContext = new AudioContext();
+                    
+                    // Check if the context is in suspended state (happens in some browsers)
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    
+                    // Create source from screen share audio
+                    mediaStreamSource = audioContext.createMediaStreamSource(stream);
+                    
+                    // Create destination for speech recognition
+                    mediaStreamDestination = audioContext.createMediaStreamDestination();
+                    
+                    // Connect source to destination
+                    mediaStreamSource.connect(mediaStreamDestination);
+                    
+                    audioAlert.classList.add('hidden');
+                    return true;
+                } catch (err) {
+                    console.error("Error setting up audio processing:", err);
+                    // Clean up any partially created resources
+                    if (audioContext) {
+                        audioContext.close().catch(e => console.error("Error closing audio context:", e));
+                        audioContext = null;
+                    }
+                    mediaStreamSource = null;
+                    mediaStreamDestination = null;
+                    
+                    audioAlert.classList.remove('hidden');
+                    return false;
+                }
+            }
+            
+            // Screen sharing setup
+            shareScreenBtn.onclick = async function() {
+                try {
+                    // Request both video and audio from the display media
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: {
+                            cursor: "always"
+                        },
+                        audio: true // Request audio capture
+                    });
+                    
+                    // Show the video preview
+                    screenPreview.srcObject = screenStream;
+                    screenPreview.classList.remove('hidden');
+                    screenPlaceholder.classList.add('hidden');
+                    
+                    // Check if we got audio tracks and set up audio processing
+                    const hasAudio = screenStream.getAudioTracks().length > 0;
+                    
+                    if (hasAudio) {
+                        // Don't set up audio processing immediately - this was causing permission loops
+                        startTranscribeBtn.disabled = false;
+                        startTranscribeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        recordAudioBtn.disabled = false;
+                        recordAudioBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        recordVideoBtn.disabled = false;
+                        recordVideoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        status.textContent = statusMessages.sharing[languageSelect.value];
+                    } else {
+                        audioAlert.classList.remove('hidden');
+                        status.textContent = statusMessages.noAudio[languageSelect.value];
+                        // Still enable video recording even without audio
+                        recordVideoBtn.disabled = false;
+                        recordVideoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    shareScreenBtn.disabled = true;
+                    shareScreenBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    stopScreenBtn.disabled = false;
+                    stopScreenBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    
+                    // Handle stream ending (user closes sharing dialog)
+                    screenStream.getVideoTracks()[0].onended = function() {
+                        stopScreenSharing();
+                    };
+                    
+                } catch (err) {
+                    console.error('Error sharing screen:', err);
+                    status.textContent = statusMessages.error[languageSelect.value] + err.message;
+                }
+            };
+            
+            stopScreenBtn.onclick = function() {
+                stopScreenSharing();
+            };
+            
+            function stopScreenSharing() {
+                // Stop transcription if active
+                if (isTranscribing) {
+                    isTranscribing = false;
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                }
+                
+                // Stop recording if active
+                if (isAudioRecording) {
+                    stopAudioRecording();
+                }
+                
+                if (isVideoRecording) {
+                    stopVideoRecording();
+                }
+                
+                // Stop screen capture
+                if (screenStream) {
+                    screenStream.getTracks().forEach(track => track.stop());
+                    screenStream = null;
+                }
+                
+                // Clean up audio context
+                if (audioContext) {
+                    if (mediaStreamSource) {
+                        mediaStreamSource.disconnect();
+                    }
+                    audioContext.close();
+                    audioContext = null;
+                    mediaStreamSource = null;
+                    mediaStreamDestination = null;
+                }
+                
+                // Reset UI
+                screenPreview.srcObject = null;
+                screenPreview.classList.add('hidden');
+                screenPlaceholder.classList.remove('hidden');
+                
+                shareScreenBtn.disabled = false;
+                shareScreenBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                stopScreenBtn.disabled = true;
+                stopScreenBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                startTranscribeBtn.disabled = true;
+                startTranscribeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                stopTranscribeBtn.disabled = true;
+                stopTranscribeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                recordAudioBtn.disabled = true;
+                recordAudioBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                recordVideoBtn.disabled = true;
+                recordVideoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // Hide recording indicator
+                recordingIndicator.classList.add('hidden');
+                
+                // Update status
+                status.textContent = statusMessages.sharingStopped[languageSelect.value];
+            }
+            
+            // Audio recording setup
+            let audioMediaRecorder;
+            let audioChunks = [];
+            let isAudioRecording = false;
+            
+            // Video recording setup
+            let videoMediaRecorder;
+            let videoChunks = [];
+            let isVideoRecording = false;
+            
+            // Audio recording functions
+            recordAudioBtn.onclick = function() {
+                if (!isAudioRecording) {
+                    // Start recording
+                    startAudioRecording();
+                } else {
+                    // Stop recording
+                    stopAudioRecording();
+                }
+            };
+            
+            function startAudioRecording() {
+                if (screenStream && screenStream.getAudioTracks().length > 0) {
+                    try {
+                        // Use existing audio tracks from screen without creating new AudioContext
+                        const audioStream = new MediaStream(screenStream.getAudioTracks());
+                        
+                        // Check if the MediaRecorder API is supported
+                        if (typeof MediaRecorder === 'undefined') {
+                            throw new Error('MediaRecorder not supported in this browser');
+                        }
+                        
+                        // Check if the browser supports the MIME type
+                        const mimeType = 'audio/webm';
+                        
+                        audioMediaRecorder = new MediaRecorder(audioStream, {
+                            mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : ''
+                        });
+                        audioChunks = [];
+                        
+                        audioMediaRecorder.ondataavailable = function(event) {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+                        
+                        audioMediaRecorder.onstop = function() {
+                            if (audioChunks.length === 0) {
+                                status.textContent = statusMessages.error[languageSelect.value] + 
+                                    (languageSelect.value.startsWith('ar') ? 
+                                        'لم يتم تسجيل أي بيانات صوتية.' : 
+                                        'No audio data was recorded.');
+                                return;
+                            }
+                            
+                            const audioBlob = new Blob(audioChunks, { type: audioMediaRecorder.mimeType || 'audio/webm' });
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            
+                            downloadAudioLink.href = audioUrl;
+                            downloadAudioLink.download = 'screen_audio_' + new Date().toISOString() + '.webm';
+                            downloadSection.classList.remove('hidden');
+                            downloadAudioLink.style.display = 'inline-block';
+                            downloadVideoLink.classList.add('hidden');
+                        };
+                        
+                        // Request data every second to ensure we get chunks even for short recordings
+                        audioMediaRecorder.start(1000);
+                        isAudioRecording = true;
+                        recordAudioBtn.textContent = languageSelect.value.startsWith('ar') ? 'إيقاف تسجيل الصوت' : 'Stop Audio Recording';
+                        recordAudioBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                        recordAudioBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                        
+                        // Disable video recording while audio recording is active
+                        recordVideoBtn.disabled = true;
+                        recordVideoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        
+                        // Show recording indicator
+                        recordingText.textContent = languageSelect.value.startsWith('ar') ? 'جاري تسجيل الصوت...' : 'Recording audio...';
+                        recordingIndicator.classList.remove('hidden');
+                        
+                        // Update status
+                        status.textContent = statusMessages.audioRecording[languageSelect.value];
+                        
+                    } catch (err) {
+                        console.error('Error starting audio recording:', err);
+                        status.textContent = statusMessages.error[languageSelect.value] + err.message;
+                    }
+                } else {
+                    status.textContent = statusMessages.error[languageSelect.value] + 
+                        (languageSelect.value.startsWith('ar') ? 
+                            'لا يوجد صوت متاح من الشاشة للتسجيل.' : 
+                            'No screen audio available to record.');
+                }
+            }
+            
+            function stopAudioRecording() {
+                if (audioMediaRecorder && isAudioRecording) {
+                    audioMediaRecorder.stop();
+                    isAudioRecording = false;
+                    recordAudioBtn.textContent = languageSelect.value.startsWith('ar') ? 'تسجيل الصوت' : 'Record Audio';
+                    recordAudioBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    recordAudioBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                    
+                    // Re-enable video recording
+                    recordVideoBtn.disabled = false;
+                    recordVideoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    
+                    // Hide recording indicator
+                    recordingIndicator.classList.add('hidden');
+                    
+                    // Update status
+                    status.textContent = statusMessages.recordingStopped[languageSelect.value];
+                }
+            }
+            
+            // Video recording functions
+            recordVideoBtn.onclick = function() {
+                if (!isVideoRecording) {
+                    // Start recording
+                    startVideoRecording();
+                } else {
+                    // Stop recording
+                    stopVideoRecording();
+                }
+            };
+            
+            function startVideoRecording() {
+                if (screenStream) {
+                    try {
+                        // Get video quality settings
+                        const quality = qualitySelect.value;
+                        const videoOptions = {
+                            videoBitsPerSecond: quality === 'high' ? 5000000 : 2500000
+                        };
+                        
+                        // Check if the MediaRecorder API is supported
+                        if (typeof MediaRecorder === 'undefined') {
+                            throw new Error('MediaRecorder not supported in this browser');
+                        }
+                        
+                        // Check if the browser supports the MIME type
+                        let mimeType = 'video/webm;codecs=vp9,opus';
+                        if (!MediaRecorder.isTypeSupported(mimeType)) {
+                            mimeType = 'video/webm';
+                            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                                mimeType = '';
+                            }
+                        }
+                        
+                        // Create MediaRecorder for video
+                        videoMediaRecorder = new MediaRecorder(screenStream, {
+                            mimeType: mimeType,
+                            ...videoOptions
+                        });
+                        videoChunks = [];
+                        
+                        videoMediaRecorder.ondataavailable = function(event) {
+                            if (event.data.size > 0) {
+                                videoChunks.push(event.data);
+                            }
+                        };
+                        
+                        videoMediaRecorder.onstop = function() {
+                            if (videoChunks.length === 0) {
+                                status.textContent = statusMessages.error[languageSelect.value] + 
+                                    (languageSelect.value.startsWith('ar') ? 
+                                        'لم يتم تسجيل أي بيانات فيديو.' : 
+                                        'No video data was recorded.');
+                                return;
+                            }
+                            
+                            const videoBlob = new Blob(videoChunks, { type: videoMediaRecorder.mimeType || 'video/webm' });
+                            const videoUrl = URL.createObjectURL(videoBlob);
+                            
+                            downloadVideoLink.href = videoUrl;
+                            downloadVideoLink.download = 'screen_video_' + new Date().toISOString() + '.webm';
+                            downloadSection.classList.remove('hidden');
+                            downloadVideoLink.classList.remove('hidden');
+                            downloadAudioLink.classList.add('hidden');
+                        };
+                        
+                        // Request data every second to ensure we get chunks even for short recordings
+                        videoMediaRecorder.start(1000);
+                        isVideoRecording = true;
+                        recordVideoBtn.textContent = languageSelect.value.startsWith('ar') ? 'إيقاف تسجيل الفيديو' : 'Stop Video Recording';
+                        recordVideoBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                        recordVideoBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                        
+                        // Disable audio recording while video recording is active
+                        recordAudioBtn.disabled = true;
+                        recordAudioBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        
+                        // Show recording indicator
+                        recordingText.textContent = languageSelect.value.startsWith('ar') ? 'جاري تسجيل الفيديو...' : 'Recording video...';
+                        recordingIndicator.classList.remove('hidden');
+                        
+                        // Update status
+                        status.textContent = statusMessages.videoRecording[languageSelect.value];
+                        
+                    } catch (err) {
+                        console.error('Error starting video recording:', err);
+                        status.textContent = statusMessages.error[languageSelect.value] + err.message;
+                    }
+                } else {
+                    status.textContent = statusMessages.error[languageSelect.value] + 
+                        (languageSelect.value.startsWith('ar') ? 
+                            'لا توجد شاشة متاحة للتسجيل. يرجى مشاركة الشاشة أولاً.' : 
+                            'No screen available to record. Please share your screen first.');
+                }
+            }
+            
+            function stopVideoRecording() {
+                if (videoMediaRecorder && isVideoRecording) {
+                    videoMediaRecorder.stop();
+                    isVideoRecording = false;
+                    recordVideoBtn.textContent = languageSelect.value.startsWith('ar') ? 'تسجيل الفيديو' : 'Record Video';
+                    recordVideoBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    recordVideoBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                    
+                    // Re-enable audio recording
+                    recordAudioBtn.disabled = false;
+                    recordAudioBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    
+                    // Hide recording indicator
+                    recordingIndicator.classList.add('hidden');
+                    
+                    // Update status
+                    status.textContent = statusMessages.recordingStopped[languageSelect.value];
+                }
+            }
+            
+            // Clear everything
+            clearBtn.onclick = function() {
+                // Clear transcript
+                finalTranscript = '';
+                transcript.innerHTML = '';
+                
+                // Clear translation
+                translatedText.innerHTML = '';
+                
+                // Stop recordings if active
+                if (isAudioRecording) {
+                    stopAudioRecording();
+                }
+                
+                if (isVideoRecording) {
+                    stopVideoRecording();
+                }
+                
+                // Stop screen sharing if active
+                if (screenStream) {
+                    stopScreenSharing();
+                }
+                
+                // Hide download section
+                downloadSection.classList.add('hidden');
+                
+                // Reset status
+                status.textContent = statusMessages.allCleared[languageSelect.value];
+                
+                // Hide alert
+                audioAlert.classList.add('hidden');
+            };
+            
+            // Initial language update
+            updateLanguage(languageSelect.value);
+            
+            // Initial translation language setup
+            updateTranslationLanguages();
+        });
+    </script>
